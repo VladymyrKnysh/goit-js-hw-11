@@ -1,0 +1,102 @@
+// import simpleLightbox from "simplelightbox";
+// import "simplelightbox/dist/simple-lightbox.min.css";
+import axios from "axios";
+import { Notify } from "notiflix";
+
+const refs = {
+  form: document.querySelector('.search-form'),
+  gallery: document.querySelector('.gallery'),
+  loadmoreBtn: document.querySelector('.load-more'),
+}
+let page = 1;
+let inputValue = ''
+
+const BASE_URL = 'https://pixabay.com/api/'
+const KEY = '29578130-7e7d5768f03af60ad584cdcef'
+
+refs.form.addEventListener('submit', onFormSubmit)
+
+function onFormSubmit(e) {
+   e.preventDefault()
+  inputValue = e.currentTarget.elements.searchQuery.value.trim();
+  page = 1
+  if (inputValue === '') {
+    Notify.warning('Поле поиска должно быть заполнено');
+    return
+  }
+  fetchImages(inputValue)
+ 
+  
+}
+
+async function fetchImages(inputValue) {
+try {
+  const response = await axios
+    .get(`${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`)
+  renderList(response.data.hits)
+  
+  page += 1
+ 
+} catch (error) {
+  console.log(error);
+}
+ 
+}
+
+
+function renderList(images) {
+  
+  if (images.length === 0) {
+    refs.gallery.innerHTML = ''
+    refs.loadmoreBtn.classList.add('visually-hidden-js')
+    Notify.failure('Sorry, there are no images matching your search query. Please try again.')
+    return
+   }
+  const markup = images
+    .map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads}) => {
+      return `<div class="photo-card">
+  <img src="${webformatURL}" alt="${tags}" loading="lazy"/>
+   <div class="info">
+     <p class="info-item">
+       <b>Likes</b> <br>
+       ${likes}
+     </p>
+     <p class="info-item">
+       <b>Views</b> <br>
+       ${views}
+    </p>
+     <p class="info-item">
+       <b>Comments</b> <br>
+       ${comments}
+     </p>
+     <p class="info-item">
+       <b>Downloads</b> <br>
+       ${downloads}
+     </p>
+   </div>
+ </div>`;
+    })
+        .join("");
+  refs.gallery.innerHTML = markup;
+   refs.loadmoreBtn.classList.remove('visually-hidden-js')
+}
+
+refs.loadmoreBtn.addEventListener('click', onLoadmoreClick)
+
+async function onLoadmoreClick() {
+try {
+  const response = await axios
+    .get(`${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`)
+  renderList(response.data.hits)
+   page += 1
+} catch (error) {
+  console.log(error);
+}
+}
+
+
+
+
+
+  
+
