@@ -37,6 +37,7 @@ try {
   renderList(response.data.hits)
    totalHits = response.data.totalHits
   page += 1
+  Notify.success(`Hooray! We found ${totalHits} images.`)
 } catch (error) {
   console.log(error);
 }
