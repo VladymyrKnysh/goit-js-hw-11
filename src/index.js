@@ -8,16 +8,19 @@ const refs = {
   gallery: document.querySelector('.gallery'),
   loadmoreBtn: document.querySelector('.load-more'),
 }
+
 let page = 1;
 let inputValue = ''
-
+let totalHits = 0
+const per_page = 40
 const BASE_URL = 'https://pixabay.com/api/'
 const KEY = '29578130-7e7d5768f03af60ad584cdcef'
 
 refs.form.addEventListener('submit', onFormSubmit)
-
+ 
 function onFormSubmit(e) {
-   e.preventDefault()
+  e.preventDefault()
+  refs.gallery.innerHTML = ''
   inputValue = e.currentTarget.elements.searchQuery.value.trim();
   page = 1
   if (inputValue === '') {
@@ -25,8 +28,6 @@ function onFormSubmit(e) {
     return
   }
   fetchImages(inputValue)
- 
-  
 }
 
 async function fetchImages(inputValue) {
@@ -34,18 +35,14 @@ try {
   const response = await axios
     .get(`${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`)
   renderList(response.data.hits)
-  
+   totalHits = response.data.totalHits
   page += 1
- 
 } catch (error) {
   console.log(error);
 }
- 
 }
 
-
 function renderList(images) {
-  
   if (images.length === 0) {
     refs.gallery.innerHTML = ''
     refs.loadmoreBtn.classList.add('visually-hidden-js')
@@ -77,14 +74,21 @@ function renderList(images) {
  </div>`;
     })
         .join("");
-  refs.gallery.innerHTML = markup;
+  refs.gallery.insertAdjacentHTML("beforeend", markup)
    refs.loadmoreBtn.classList.remove('visually-hidden-js')
 }
 
 refs.loadmoreBtn.addEventListener('click', onLoadmoreClick)
 
-async function onLoadmoreClick() {
-try {
+async function onLoadmoreClick() { 
+  const totalPages = Math.ceil(totalHits / per_page)
+  if (page > totalPages) {
+    refs.loadmoreBtn.classList.add('visually-hidden-js')
+     refs.gallery.innerHTML = ''
+    Notify.info("We're sorry, but you've reached the end of search results.")
+    return
+  }
+  try {
   const response = await axios
     .get(`${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`)
   renderList(response.data.hits)
